@@ -8,6 +8,8 @@ using MongoDB.Bson;
 using System.Threading.Tasks;
 using MongoDB.Bson.Serialization;
 using Newtonsoft.Json;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace MongoDB.Tutorials.AzureFunctions
 {
@@ -17,6 +19,8 @@ namespace MongoDB.Tutorials.AzureFunctions
         public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "patch", "delete", Route = "Restaurant/id/{restaurantId}")]HttpRequestMessage req, string restaurantId, TraceWriter log)
         {
             log.Info("Restaurant function processed a request.");
+            string returnValue = string.Empty;
+            HttpStatusCode returnStatusCode = HttpStatusCode.Forbidden;
 
             try
             {
@@ -35,8 +39,6 @@ namespace MongoDB.Tutorials.AzureFunctions
                 //use the same restaurant_id filter for all get/update/delete queries
                 var filter = Builders<BsonDocument>.Filter.Eq("restaurant_id", restaurantId);
                 var result = new BsonDocument();
-                string returnValue = string.Empty;
-                HttpStatusCode returnStatusCode = HttpStatusCode.Forbidden;
 
                 switch (req.Method.Method)
                 {
@@ -58,25 +60,44 @@ namespace MongoDB.Tutorials.AzureFunctions
                         string jsonContent = req.Content.ReadAsStringAsync().Result;
                         try
                         {
-                            BsonDocument updateDoc = BsonSerializer.Deserialize<BsonDocument>(jsonContent);
+                            BsonDocument changesDocument = BsonSerializer.Deserialize<BsonDocument>(jsonContent);
+                            UpdateDefinition<BsonDocument> update = null;
+                            foreach (var change in changesDocument)
+                            {
+                                if (update == null)
+                                {
+                                    var builder = Builders<BsonDocument>.Update;
+                                    update = builder.Set(change.Name, change.Value);
+                                }
+                                else
+                                {
+                                    update = update.Set(change.Name, change.Value);
+                                }
+                            }
+
+                            //you can also use the simpler form below if you're OK with bypassing the UpdateDefinitionBuilder (and trust the JSON string to be fully correct)
+                            update = new BsonDocumentUpdateDefinition<BsonDocument>(new BsonDocument("$set", changesDocument));
+
+                            //The following lines should be commented out for debugging purposes
+                            //var registry = BsonSerializer.SerializerRegistry;
+                            //var serializer = registry.GetSerializer<BsonDocument>();
+                            //var rendered = update.Render(serializer, registry).ToJson();
+
+                            var updateResult = await collection.UpdateOneAsync(filter, update);
+                            
+                            if(updateResult.ModifiedCount == 1)
+                            {
+                                returnStatusCode = HttpStatusCode.OK;
+                            }
+                            else
+                            {
+                                returnValue = string.Format("A restaurant with id {0} could not be updated", restaurantId);
+                                returnStatusCode = HttpStatusCode.NotFound;
+                            }
                         }
                         catch (System.FormatException)
                         {
                             log.Info(string.Format("The JSON content {0} is invalid", jsonContent));
-                        }
-
-                        var update = Builders<BsonDocument>.Update
-                            .Set("cuisine", "American (New)")
-                            .CurrentDate("lastModified");
-                        if (jsonContent != null && !string.IsNullOrEmpty(jsonContent))
-                        {
-                            result = await collection.FindOneAndUpdateAsync(filter, update);
-                            returnStatusCode = HttpStatusCode.OK;
-                        }
-                        if (result == null)
-                        {
-                            returnValue = string.Format("A restaurant with id {0} could not be updated", restaurantId);
-                            returnStatusCode = HttpStatusCode.NotFound;
                         }
                         break;
                     case "DELETE":
@@ -95,15 +116,14 @@ namespace MongoDB.Tutorials.AzureFunctions
                         break;
                 }
                 if (result != null && result.ElementCount > 0)
-                    returnValue = result.ToJson();
-
-                return req.CreateResponse(returnStatusCode, returnValue);
+                    returnValue = result.ToJson();                
             }
             catch (System.Exception ex)
             {
                 log.Error("An error occurred", ex);
-                throw;
             }
+
+            return req.CreateResponse(returnStatusCode, returnValue);
         }
     }
 }
