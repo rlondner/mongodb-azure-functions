@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -20,7 +19,7 @@ namespace MongoDB.Tutorials.AzureFunctions
             log.Info("CreateRestaurant function processed a request.");
 
             string strMongoDBAtlasUri = System.Environment.GetEnvironmentVariable("MongoDBAtlasURI");
-            log.Info("The Atlas connection string is: " + strMongoDBAtlasUri);
+            log.Info("Atlas connection string is: " + strMongoDBAtlasUri);
 
             MongoUrl mongoUrl = new MongoUrl(strMongoDBAtlasUri);
             var settings = MongoClientSettings.FromUrl(mongoUrl);

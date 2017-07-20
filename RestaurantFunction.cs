@@ -7,9 +7,6 @@ using MongoDB.Driver;
 using MongoDB.Bson;
 using System.Threading.Tasks;
 using MongoDB.Bson.Serialization;
-using Newtonsoft.Json;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace MongoDB.Tutorials.AzureFunctions
 {
@@ -25,7 +22,7 @@ namespace MongoDB.Tutorials.AzureFunctions
             try
             {
                 string strMongoDBAtlasUri = System.Environment.GetEnvironmentVariable("MongoDBAtlasURI");
-                log.Info("The Atlas connection string is: " + strMongoDBAtlasUri);
+                log.Info("Atlas connection string is: " + strMongoDBAtlasUri);
 
                 MongoUrl mongoUrl = new MongoUrl(strMongoDBAtlasUri);
                 var settings = MongoClientSettings.FromUrl(mongoUrl);
