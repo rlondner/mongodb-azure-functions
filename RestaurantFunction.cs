@@ -98,15 +98,15 @@ namespace MongoDB.Tutorials.AzureFunctions
                         }
                         break;
                     case "DELETE":
-                        result = await collection.FindOneAndDeleteAsync(filter);
-                        if (result == null)
+                        var deleteResult = await collection.DeleteOneAsync(filter);
+                        if (deleteResult.DeletedCount == 1)
                         {
-                            returnValue = string.Format("A restaurant with id {0} could not be deleted", restaurantId);
-                            returnStatusCode = HttpStatusCode.NotFound;
+                            returnStatusCode = HttpStatusCode.OK;                          
                         }
                         else
                         {
-                            returnStatusCode = HttpStatusCode.OK;
+                            returnValue = string.Format("A restaurant with id {0} could not be deleted", restaurantId);
+                            returnStatusCode = HttpStatusCode.NotFound;
                         }
                         break;
                     default:

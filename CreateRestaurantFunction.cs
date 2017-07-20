@@ -28,13 +28,12 @@ namespace MongoDB.Tutorials.AzureFunctions
 
             var client = new MongoClient(settings);           
             var db = client.GetDatabase("travel");
-
             ObjectId itemId = ObjectId.Empty;
             string jsonContent = string.Empty;
 
             try
             {
-                //retrieving the content from the request's body
+                //retrieve the content from the request's body
                 jsonContent = req.Content.ReadAsStringAsync().Result;
                 //assuming we have valid JSON content, convert to BSON
                 BsonDocument doc = BsonSerializer.Deserialize<BsonDocument>(jsonContent);
