@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using Microsoft.Azure.WebJobs;
@@ -7,7 +6,6 @@ using Microsoft.Azure.WebJobs.Host;
 using MongoDB.Driver;
 using MongoDB.Bson;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using MongoDB.Bson.Serialization;
 using Newtonsoft.Json;
 
@@ -16,7 +14,6 @@ namespace MongoDB.Tutorials.AzureFunctions
     public static class RestaurantFunction
     {
         [FunctionName("Restaurant")]
-
         public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "patch", "delete", Route = "Restaurant/id/{restaurantId}")]HttpRequestMessage req, string restaurantId, TraceWriter log)
         {
             log.Info("Restaurant function processed a request.");
@@ -39,16 +36,22 @@ namespace MongoDB.Tutorials.AzureFunctions
                 var filter = Builders<BsonDocument>.Filter.Eq("restaurant_id", restaurantId);
                 var result = new BsonDocument();
                 string returnValue = string.Empty;
+                HttpStatusCode returnStatusCode = HttpStatusCode.Forbidden;
 
                 switch (req.Method.Method)
                 {
                     case "GET":
                         var results = await collection.Find(filter).ToListAsync();
                         if (results.Count > 0)
+                        {
                             result = results[0];
+                            returnStatusCode = HttpStatusCode.OK;
+                        }
+
                         else
                         {
                             returnValue = string.Format("A restaurant with id {0} could not be found", restaurantId);
+                            returnStatusCode = HttpStatusCode.NotFound;
                         }
                         break;
                     case "PATCH":
@@ -61,17 +64,19 @@ namespace MongoDB.Tutorials.AzureFunctions
                         {
                             log.Info(string.Format("The JSON content {0} is invalid", jsonContent));
                         }
-                        
+
                         var update = Builders<BsonDocument>.Update
                             .Set("cuisine", "American (New)")
-                            .CurrentDate("lastModified");                       
+                            .CurrentDate("lastModified");
                         if (jsonContent != null && !string.IsNullOrEmpty(jsonContent))
                         {
                             result = await collection.FindOneAndUpdateAsync(filter, update);
+                            returnStatusCode = HttpStatusCode.OK;
                         }
-                        if(result==null)
+                        if (result == null)
                         {
                             returnValue = string.Format("A restaurant with id {0} could not be updated", restaurantId);
+                            returnStatusCode = HttpStatusCode.NotFound;
                         }
                         break;
                     case "DELETE":
@@ -79,15 +84,20 @@ namespace MongoDB.Tutorials.AzureFunctions
                         if (result == null)
                         {
                             returnValue = string.Format("A restaurant with id {0} could not be deleted", restaurantId);
+                            returnStatusCode = HttpStatusCode.NotFound;
+                        }
+                        else
+                        {
+                            returnStatusCode = HttpStatusCode.OK;
                         }
                         break;
                     default:
                         break;
                 }
-                if (result!=null && result.ElementCount > 0)
+                if (result != null && result.ElementCount > 0)
                     returnValue = result.ToJson();
 
-                return req.CreateResponse(HttpStatusCode.OK, returnValue);
+                return req.CreateResponse(returnStatusCode, returnValue);
             }
             catch (System.Exception ex)
             {
