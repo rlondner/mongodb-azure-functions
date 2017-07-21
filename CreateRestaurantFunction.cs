@@ -19,7 +19,7 @@ namespace MongoDB.Tutorials.AzureFunctions
             log.Info("CreateRestaurant function processed a request.");
 
             string strMongoDBAtlasUri = System.Environment.GetEnvironmentVariable("MongoDBAtlasURI");
-            log.Info("Atlas connection string is: " + strMongoDBAtlasUri);
+            log.Info($"Atlas connection string is { strMongoDBAtlasUri}");
 
             MongoUrl mongoUrl = new MongoUrl(strMongoDBAtlasUri);
             var settings = MongoClientSettings.FromUrl(mongoUrl);
@@ -46,7 +46,7 @@ namespace MongoDB.Tutorials.AzureFunctions
             catch (System.FormatException fex)
             {
                 //thrown if there's an error in the parsed JSON
-                log.Error("A format exception occurred, check the JSON document is valid: " + jsonContent, fex);
+                log.Error($"A format exception occurred, check the JSON document is valid: {jsonContent}", fex);
             }
             catch (System.TimeoutException tex)
             {
@@ -63,7 +63,7 @@ namespace MongoDB.Tutorials.AzureFunctions
 
             return itemId == ObjectId.Empty
                 ? req.CreateResponse(HttpStatusCode.BadRequest, "An error occurred, please check the function log")
-                : req.CreateResponse(HttpStatusCode.OK, "The created item's _id is " + itemId);
+                : req.CreateResponse(HttpStatusCode.OK, $"The created item's _id is  {itemId}");
         }
     }
 }

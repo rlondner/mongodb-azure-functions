@@ -22,7 +22,7 @@ namespace MongoDB.Tutorials.AzureFunctions
             try
             {
                 string strMongoDBAtlasUri = System.Environment.GetEnvironmentVariable("MongoDBAtlasURI");
-                log.Info("Atlas connection string is: " + strMongoDBAtlasUri);
+                log.Info($"Atlas connection string is: {strMongoDBAtlasUri}");
 
                 MongoUrl mongoUrl = new MongoUrl(strMongoDBAtlasUri);
                 var settings = MongoClientSettings.FromUrl(mongoUrl);
@@ -49,7 +49,7 @@ namespace MongoDB.Tutorials.AzureFunctions
 
                         else
                         {
-                            returnValue = string.Format("A restaurant with id {0} could not be found", restaurantId);
+                            returnValue = $"A restaurant with id {restaurantId} could not be found";
                             returnStatusCode = HttpStatusCode.NotFound;
                         }
                         break;
@@ -88,7 +88,7 @@ namespace MongoDB.Tutorials.AzureFunctions
                             }
                             else
                             {
-                                returnValue = string.Format("A restaurant with id {0} could not be updated", restaurantId);
+                                returnValue = $"A restaurant with id {restaurantId} could not be updated";
                                 returnStatusCode = HttpStatusCode.NotFound;
                                 if (updateResult.MatchedCount == 1)
                                 {
@@ -100,7 +100,7 @@ namespace MongoDB.Tutorials.AzureFunctions
                         }
                         catch (System.FormatException)
                         {
-                            log.Info(string.Format("The JSON content {0} is invalid", jsonContent));
+                            log.Info($"The JSON content {jsonContent} is invalid");
                         }
                         break;
                     case "DELETE":
@@ -111,7 +111,7 @@ namespace MongoDB.Tutorials.AzureFunctions
                         }
                         else
                         {
-                            returnValue = string.Format("A restaurant with id {0} could not be deleted", restaurantId);
+                            returnValue = $"A restaurant with id {restaurantId} could not be deleted";
                             returnStatusCode = HttpStatusCode.NotFound;
                         }
                         break;
