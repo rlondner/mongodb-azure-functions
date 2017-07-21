@@ -90,6 +90,12 @@ namespace MongoDB.Tutorials.AzureFunctions
                             {
                                 returnValue = string.Format("A restaurant with id {0} could not be updated", restaurantId);
                                 returnStatusCode = HttpStatusCode.NotFound;
+                                if (updateResult.MatchedCount == 1)
+                                {
+                                    returnValue += " because this update would have left it unchanged";
+                                    returnStatusCode = HttpStatusCode.NotModified;
+                                }
+                                
                             }
                         }
                         catch (System.FormatException)
