@@ -1,13 +1,13 @@
+using System;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
-
-using MongoDB.Driver;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
+using MongoDB.Driver;
 
 namespace MongoDB.Tutorials.AzureFunctions
 {
@@ -18,28 +18,29 @@ namespace MongoDB.Tutorials.AzureFunctions
         {
             log.Info("CreateRestaurant function processed a request.");
 
-            string strMongoDBAtlasUri = System.Environment.GetEnvironmentVariable("MongoDBAtlasURI");
-            log.Info($"Atlas connection string is { strMongoDBAtlasUri}");
+            var strMongoDBAtlasUri = System.Environment.GetEnvironmentVariable("MongoDBAtlasURI");
+            log.Info($"Atlas connection string is {strMongoDBAtlasUri}");
 
-            MongoUrl mongoUrl = new MongoUrl(strMongoDBAtlasUri);
+            var mongoUrl = new MongoUrl(strMongoDBAtlasUri);
             var settings = MongoClientSettings.FromUrl(mongoUrl);
             //for more on why we're using ServerSelectionTimeout, read https://scalegrid.io/blog/understanding-mongodb-client-timeout-options/
-            settings.ServerSelectionTimeout = new System.TimeSpan(0, 0, 5);
+            settings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
 
             var client = new MongoClient(settings);           
             var db = client.GetDatabase("travel");
-            ObjectId itemId = ObjectId.Empty;
-            string jsonContent = string.Empty;
+
+            var itemId = ObjectId.Empty;
+            var jsonContent = string.Empty;
 
             try
             {
-                //retrieve the content from the request's body
-                jsonContent = req.Content.ReadAsStringAsync().Result;
+                //retrieving the content from the request's body
+                jsonContent = await req.Content.ReadAsStringAsync().ConfigureAwait(false);
                 //assuming we have valid JSON content, convert to BSON
-                BsonDocument doc = BsonSerializer.Deserialize<BsonDocument>(jsonContent);
+                var doc = BsonSerializer.Deserialize<BsonDocument>(jsonContent);
                 var collection = db.GetCollection<BsonDocument>("restaurants");
                 //store new document in MongoDB collection
-                await collection.InsertOneAsync(doc);
+                await collection.InsertOneAsync(doc).ConfigureAwait(false);
                 //retrieve the _id property created document
                 itemId = (ObjectId)doc["_id"];
             }
