@@ -14,29 +14,13 @@ namespace MongoDB.Tutorials.AzureFunctions
 {
     public static class RestaurantFunction
     {
-        static IMongoCollection<BsonDocument> collection;
-        static FilterDefinition<BsonDocument> filter;
-        static TraceWriter _log;
-
         [FunctionName("Restaurant")]
         public static Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "patch", "delete", Route = "Restaurant/id/{restaurantId}")]HttpRequestMessage req, string restaurantId, TraceWriter log)
         {
             log.Info("Restaurant function processed a request.");
-
-            var strMongoDBAtlasUri = Environment.GetEnvironmentVariable("MongoDBAtlasURI");
-            log.Info($"Atlas connection string is: {strMongoDBAtlasUri}");
-
-            var mongoUrl = new MongoUrl(strMongoDBAtlasUri);
-            var settings = MongoClientSettings.FromUrl(mongoUrl);
-            //for more on why we're using ServerSelectionTimeout, read https://scalegrid.io/blog/understanding-mongodb-client-timeout-options/
-            settings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
-
-            var client = new MongoClient(settings);
-            var db = client.GetDatabase("travel");
-            var collection = db.GetCollection<BsonDocument>("restaurants");
-
             try
             {
+                var collection = RestaurantsCollection.Instance;
                 switch (req.Method.Method)
                 {
                     case "GET":
@@ -110,7 +94,7 @@ namespace MongoDB.Tutorials.AzureFunctions
             }
 
             //you can also use the simpler form below if you're OK with bypassing the UpdateDefinitionBuilder (and trust the JSON string to be fully correct)
-            update = new BsonDocument("$set", changesDocument);
+            //update = new BsonDocument("$set", changesDocument);
 
             //The following lines could be uncommented out for debugging purposes
             //var registry = collection.Settings.SerializerRegistry;

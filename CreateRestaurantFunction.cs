@@ -16,33 +16,16 @@ namespace MongoDB.Tutorials.AzureFunctions
         [FunctionName("CreateRestaurant")]
         public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)]HttpRequestMessage req, TraceWriter log)
         {
-
             log.Info("CreateRestaurant function processed a request.");
-
-            var strMongoDBAtlasUri = System.Environment.GetEnvironmentVariable("MongoDBAtlasURI");
-            log.Info($"Atlas connection string is {strMongoDBAtlasUri}");
-
-            var mongoUrl = new MongoUrl(strMongoDBAtlasUri);
-            var settings = MongoClientSettings.FromUrl(mongoUrl);
-            //for more on why we're using ServerSelectionTimeout, read https://scalegrid.io/blog/understanding-mongodb-client-timeout-options/
-            settings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
-
-            var client = new MongoClient(settings);           
-            var db = client.GetDatabase("travel");
-
             var itemId = ObjectId.Empty;
             var jsonContent = string.Empty;
-
-
             try
             {
                 //retrieving the content from the request's body
                 jsonContent = await req.Content.ReadAsStringAsync().ConfigureAwait(false);
                 //assuming we have valid JSON content, convert to BSON
-
                 var doc = BsonSerializer.Deserialize<BsonDocument>(jsonContent);
-                var collection = db.GetCollection<BsonDocument>("restaurants");
-
+                var collection = RestaurantsCollection.Instance;
                 //store new document in MongoDB collection
                 await collection.InsertOneAsync(doc).ConfigureAwait(false);
                 //retrieve the _id property created document
