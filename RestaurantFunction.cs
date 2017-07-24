@@ -17,7 +17,7 @@ namespace MongoDB.Tutorials.AzureFunctions
         static TraceWriter _log;
 
         [FunctionName("Restaurant")]
-        public static HttpResponseMessage Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "patch", "delete", Route = "Restaurant/id/{restaurantId}")]HttpRequestMessage req, string restaurantId, TraceWriter log)
+        public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "patch", "delete", Route = "Restaurant/id/{restaurantId}")]HttpRequestMessage req, string restaurantId, TraceWriter log)
         {
             log.Info("Restaurant function processed a request.");
             string returnValue = string.Empty;
@@ -33,14 +33,14 @@ namespace MongoDB.Tutorials.AzureFunctions
                 switch (req.Method.Method)
                 {
                     case "GET":
-                        HandleGET(restaurantId, out returnStatusCode, out returnValue);
+                        RunGet(restaurantId, out returnStatusCode, out returnValue);
                         break;
                     case "PATCH":
-                        jsonContent = req.Content.ReadAsStringAsync().Result;
-                        HandlePATCH(jsonContent, restaurantId, out returnStatusCode, out returnValue);
+                        jsonContent = await req.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        RunPatch(jsonContent, restaurantId, out returnStatusCode, out returnValue);
                         break;
                     case "DELETE":
-                        HandleDELETE(restaurantId, out returnStatusCode, out returnValue);
+                        RunDelete(restaurantId, out returnStatusCode, out returnValue);
                         break;
                     default:
                         break;
@@ -57,7 +57,7 @@ namespace MongoDB.Tutorials.AzureFunctions
             return req.CreateResponse(returnStatusCode, returnValue);
         }
 
-        private static void HandleGET(string restaurantId, out HttpStatusCode httpStatusCode, out string retValue)
+        private static void RunGet(string restaurantId, out HttpStatusCode httpStatusCode, out string retValue)
         {
             var results = collection.Find(filter).ToList();
             var result = new BsonDocument();
@@ -76,11 +76,11 @@ namespace MongoDB.Tutorials.AzureFunctions
             }
         }
 
-        private static void HandlePATCH(string jsonContent, string restaurantId, out HttpStatusCode httpStatusCode, out string retValue)
+        private static void RunPatch(string jsonContent, string restaurantId, out HttpStatusCode httpStatusCode, out string retValue)
         {
             httpStatusCode = HttpStatusCode.NotFound;
             retValue = string.Empty;
-            BsonDocument changesDocument = BsonSerializer.Deserialize<BsonDocument>(jsonContent);
+            var changesDocument = BsonSerializer.Deserialize<BsonDocument>(jsonContent);
             UpdateDefinition<BsonDocument> update = null;
             foreach (var change in changesDocument)
             {
@@ -95,7 +95,8 @@ namespace MongoDB.Tutorials.AzureFunctions
                 }
             }
             //you can also use the simpler form below if you're OK with bypassing the UpdateDefinitionBuilder (and trust the JSON string to be fully correct)
-            update = new BsonDocumentUpdateDefinition<BsonDocument>(new BsonDocument("$set", changesDocument));
+            //update = new BsonDocumentUpdateDefinition<BsonDocument>(new BsonDocument("$set", changesDocument));
+            
             //The following lines should be commented out for debugging purposes
             //var registry = BsonSerializer.SerializerRegistry;
             //var serializer = registry.GetSerializer<BsonDocument>();
@@ -117,7 +118,7 @@ namespace MongoDB.Tutorials.AzureFunctions
             }
         }
 
-        private static void HandleDELETE(string restaurantId, out HttpStatusCode httpStatusCode, out string retValue)
+        private static void RunDelete(string restaurantId, out HttpStatusCode httpStatusCode, out string retValue)
         {
             var deleteResult = collection.DeleteOne(filter);
             retValue = string.Empty;
