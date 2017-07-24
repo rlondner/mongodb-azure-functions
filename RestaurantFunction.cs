@@ -14,6 +14,10 @@ namespace MongoDB.Tutorials.AzureFunctions
 {
     public static class RestaurantFunction
     {
+        static IMongoCollection<BsonDocument> collection;
+        static FilterDefinition<BsonDocument> filter;
+        static TraceWriter _log;
+
         [FunctionName("Restaurant")]
         public static Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "patch", "delete", Route = "Restaurant/id/{restaurantId}")]HttpRequestMessage req, string restaurantId, TraceWriter log)
         {
@@ -119,7 +123,6 @@ namespace MongoDB.Tutorials.AzureFunctions
             {
                 return req.CreateResponse(HttpStatusCode.OK);
             }
-
             return req.CreateResponse(HttpStatusCode.NotFound, $"A restaurant with id {restaurantId} could not be updated");
         }
     }

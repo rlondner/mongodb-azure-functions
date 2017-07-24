@@ -16,6 +16,7 @@ namespace MongoDB.Tutorials.AzureFunctions
         [FunctionName("CreateRestaurant")]
         public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)]HttpRequestMessage req, TraceWriter log)
         {
+
             log.Info("CreateRestaurant function processed a request.");
 
             var strMongoDBAtlasUri = System.Environment.GetEnvironmentVariable("MongoDBAtlasURI");
@@ -32,13 +33,16 @@ namespace MongoDB.Tutorials.AzureFunctions
             var itemId = ObjectId.Empty;
             var jsonContent = string.Empty;
 
+
             try
             {
                 //retrieving the content from the request's body
                 jsonContent = await req.Content.ReadAsStringAsync().ConfigureAwait(false);
                 //assuming we have valid JSON content, convert to BSON
+
                 var doc = BsonSerializer.Deserialize<BsonDocument>(jsonContent);
                 var collection = db.GetCollection<BsonDocument>("restaurants");
+
                 //store new document in MongoDB collection
                 await collection.InsertOneAsync(doc).ConfigureAwait(false);
                 //retrieve the _id property created document
@@ -61,7 +65,6 @@ namespace MongoDB.Tutorials.AzureFunctions
             {
                 log.Error("An error occurred", ex);
             }
-
             return itemId == ObjectId.Empty
                 ? req.CreateResponse(HttpStatusCode.BadRequest, "An error occurred, please check the function log")
                 : req.CreateResponse(HttpStatusCode.OK, $"The created item's _id is  {itemId}");

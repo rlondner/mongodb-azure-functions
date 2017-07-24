@@ -3,6 +3,7 @@
   "Values": {
     "AzureWebJobsStorage": "",
     "AzureWebJobsDashboard": "",
-    "MongoDBAtlasURI": "mongodb://localhost:27017"
+    "MongoDBAtlasURI": "mongodb://<USERNAME>:<PASSWORD>@<CLUSTERNAME_LOWERCASE>-shard-00-00-<SUFFIX>.azure.mongodb.net:27017,<CLUSTERNAME_LOWERCASE>-shard-00-01-<SUFFIX>.azure.mongodb.net:27017,<CLUSTERNAME_LOWERCASE>-shard-00-02-<SUFFIX>.azure.mongodb.net:27017/<DATABASE>?ssl=true&replicaSet=<CLUSTERNAME>-shard-0&authSource=admin&serverSelectionTimeoutMS=5000",
+    "MongoDBAtlasURI_Local": "mongodb://localhost:27017?serverSelectionTimeoutMS=5000"
   }
 }
