@@ -17,20 +17,12 @@ namespace MongoDB.Tutorials.AzureFunctions
         public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)]HttpRequestMessage req, TraceWriter log)
         {
             log.Info("CreateRestaurant function processed a request.");
-
             string strMongoDBAtlasUri = System.Environment.GetEnvironmentVariable("MongoDBAtlasURI");
-            log.Info($"Atlas connection string is { strMongoDBAtlasUri}");
-
-            MongoUrl mongoUrl = new MongoUrl(strMongoDBAtlasUri);
-            var settings = MongoClientSettings.FromUrl(mongoUrl);
-            //for more on why we're using ServerSelectionTimeout, read https://scalegrid.io/blog/understanding-mongodb-client-timeout-options/
-            settings.ServerSelectionTimeout = new System.TimeSpan(0, 0, 5);
-
-            var client = new MongoClient(settings);           
+            log.Info($"MongoDB connection string is { strMongoDBAtlasUri}");
+            var client = new MongoClient(strMongoDBAtlasUri);           
             var db = client.GetDatabase("travel");
             ObjectId itemId = ObjectId.Empty;
             string jsonContent = string.Empty;
-
             try
             {
                 //retrieve the content from the request's body
@@ -60,7 +52,6 @@ namespace MongoDB.Tutorials.AzureFunctions
             {
                 log.Error("An error occurred", ex);
             }
-
             return itemId == ObjectId.Empty
                 ? req.CreateResponse(HttpStatusCode.BadRequest, "An error occurred, please check the function log")
                 : req.CreateResponse(HttpStatusCode.OK, $"The created item's _id is  {itemId}");

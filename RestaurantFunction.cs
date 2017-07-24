@@ -18,25 +18,16 @@ namespace MongoDB.Tutorials.AzureFunctions
             log.Info("Restaurant function processed a request.");
             string returnValue = string.Empty;
             HttpStatusCode returnStatusCode = HttpStatusCode.Forbidden;
-
             try
             {
                 string strMongoDBAtlasUri = System.Environment.GetEnvironmentVariable("MongoDBAtlasURI");
-                log.Info($"Atlas connection string is: {strMongoDBAtlasUri}");
-
-                MongoUrl mongoUrl = new MongoUrl(strMongoDBAtlasUri);
-                var settings = MongoClientSettings.FromUrl(mongoUrl);
-                //for more on why we're using ServerSelectionTimeout, read https://scalegrid.io/blog/understanding-mongodb-client-timeout-options/
-                settings.ServerSelectionTimeout = new System.TimeSpan(0, 0, 5);
-
-                var client = new MongoClient(settings);
+                log.Info($"MongoDB connection string is: {strMongoDBAtlasUri}");
+                var client = new MongoClient(strMongoDBAtlasUri);
                 var db = client.GetDatabase("travel");
                 var collection = db.GetCollection<BsonDocument>("restaurants");
-
                 //use the same restaurant_id filter for all get/update/delete queries
                 var filter = Builders<BsonDocument>.Filter.Eq("restaurant_id", restaurantId);
                 var result = new BsonDocument();
-
                 switch (req.Method.Method)
                 {
                     case "GET":
@@ -46,7 +37,6 @@ namespace MongoDB.Tutorials.AzureFunctions
                             result = results[0];
                             returnStatusCode = HttpStatusCode.OK;
                         }
-
                         else
                         {
                             returnValue = $"A restaurant with id {restaurantId} could not be found";
@@ -71,18 +61,14 @@ namespace MongoDB.Tutorials.AzureFunctions
                                     update = update.Set(change.Name, change.Value);
                                 }
                             }
-
                             //you can also use the simpler form below if you're OK with bypassing the UpdateDefinitionBuilder (and trust the JSON string to be fully correct)
                             update = new BsonDocumentUpdateDefinition<BsonDocument>(new BsonDocument("$set", changesDocument));
-
                             //The following lines should be commented out for debugging purposes
                             //var registry = BsonSerializer.SerializerRegistry;
                             //var serializer = registry.GetSerializer<BsonDocument>();
                             //var rendered = update.Render(serializer, registry).ToJson();
-
                             var updateResult = await collection.UpdateOneAsync(filter, update);
-                            
-                            if(updateResult.ModifiedCount == 1)
+                            if (updateResult.ModifiedCount == 1)
                             {
                                 returnStatusCode = HttpStatusCode.OK;
                             }
@@ -94,8 +80,7 @@ namespace MongoDB.Tutorials.AzureFunctions
                                 {
                                     returnValue += " because this update would have left it unchanged";
                                     returnStatusCode = HttpStatusCode.NotModified;
-                                }
-                                
+                                }                               
                             }
                         }
                         catch (System.FormatException)
@@ -125,7 +110,6 @@ namespace MongoDB.Tutorials.AzureFunctions
             {
                 log.Error("An error occurred", ex);
             }
-
             return req.CreateResponse(returnStatusCode, returnValue);
         }
     }
