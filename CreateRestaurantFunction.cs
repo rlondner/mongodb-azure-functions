@@ -16,11 +16,7 @@ namespace MongoDB.Tutorials.AzureFunctions
         [FunctionName("CreateRestaurant")]
         public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)]HttpRequestMessage req, TraceWriter log)
         {
-            log.Info("CreateRestaurant function processed a request.");
-            string strMongoDBAtlasUri = System.Environment.GetEnvironmentVariable("MongoDBAtlasURI");
-            log.Info($"MongoDB connection string is { strMongoDBAtlasUri}");
-            var client = new MongoClient(strMongoDBAtlasUri);           
-            var db = client.GetDatabase("travel");
+            log.Info("CreateRestaurant function processed a request.");       
             ObjectId itemId = ObjectId.Empty;
             string jsonContent = string.Empty;
             try
@@ -29,7 +25,7 @@ namespace MongoDB.Tutorials.AzureFunctions
                 jsonContent = req.Content.ReadAsStringAsync().Result;
                 //assuming we have valid JSON content, convert to BSON
                 BsonDocument doc = BsonSerializer.Deserialize<BsonDocument>(jsonContent);
-                var collection = db.GetCollection<BsonDocument>("restaurants");
+                var collection = MongoDBConnection.GetCollection(log);
                 //store new document in MongoDB collection
                 await collection.InsertOneAsync(doc);
                 //retrieve the _id property created document
