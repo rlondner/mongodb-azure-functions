@@ -80,6 +80,7 @@ namespace MongoDB.Tutorials.AzureFunctions
                 return req.CreateResponse(HttpStatusCode.BadRequest, msg);
             }
 
+            //UpdateDefinition requires dot notation (such as "address.zipcode" instead of "address": {"zipcode:<value>} to preserve other attributes in subdocument)
             UpdateDefinition<BsonDocument> update = null;
             foreach (var change in changesDocument)
             {
